@@ -8,9 +8,9 @@ How can one use a single scalar control input to bring a vibrating square membra
 - State the Dirichlet eigenfunctions and eigenvalues.
 - Derive the modal equations
   
-  $$ 
+```math
   \ddot{q}_{mn} + \omega_{mn}^2 q_{mn} = \beta_{mn} b(t). 
-  $$
+```
 - Explain the meaning of the coupling coefficient $` \beta_{mn} `$.
 
 ## Milestone 2: Build the finite-dimensional model
