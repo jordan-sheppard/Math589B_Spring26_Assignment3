@@ -170,7 +170,7 @@ The project can be assigned at different levels:
 
 ## Animation
 
-![Alt text](fil://outputs/membrane.gif)
+![Animated Membrane](fil://outputs/membrane.gif)
 
 
 
