@@ -1,0 +1,318 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{bm}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\hypersetup{colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue}
+
+\title{LQR Control of a Vibrating Square Membrane\\\large Project Handout}
+\author{}
+\date{}
+
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\Om}{\Omega}
+\newcommand{\dd}{\,d}
+\newcommand{\p}{\partial}
+\newcommand{\ip}[2]{\left\langle #1,#2\right\rangle}
+\newtheorem*{remark}{Remark}
+
+\begin{document}
+\maketitle
+
+\section*{Project summary}
+We consider a square membrane with small transverse displacement. The 
+membrane is fixed on its boundary and is actuated by pressing on a 
+single localized spot. The goal is to design a linear quadratic regulator 
+(LQR) that drives the membrane to rest.
+
+This project begins with a partial differential equation and reduces it 
+to a finite-dimensional control system by expanding in Laplacian 
+eigenfunctions. The finite-dimensional truncation is then treated with 
+standard LQR machinery.
+
+\section{PDE model}
+Let
+\[
+\Omega = (0,1)\times(0,1)
+\]
+be the unit square. Let $u(x,y,t)$ denote the vertical displacement of 
+the membrane. For small displacements, $u$ satisfies the controlled 
+wave equation
+\begin{equation}
+\label{eq:wave}
+ u_{tt}(x,y,t) = c^2 \Delta u(x,y,t) + b(t)\,\psi(x,y), 
+ \qquad (x,y)\in\Omega,\ t>0,
+\end{equation}
+with fixed boundary conditions
+\begin{equation}
+\label{eq:bc}
+ u(x,y,t)=0,\qquad (x,y)\in \partial\Omega,
+\end{equation}
+and initial data
+\begin{equation}
+\label{eq:ic}
+ u(x,y,0)=u_0(x,y),\qquad u_t(x,y,0)=v_0(x,y).
+\end{equation}
+Here $c>0$ is the wave speed, $b(t)\in\R$ is the scalar control input, 
+and $\psi(x,y)$ is the actuator profile.
+
+The ideal model of pressing at one point $(x_0,y_0)\in\Omega$ is 
+obtained by taking
+\[
+\psi(x,y)=\delta(x-x_0)\delta(y-y_0),
+\]
+but this is singular. For numerical work, it is better to use a 
+localized patch actuator, for example, a narrow Gaussian or a bump 
+function centered at $(x_0,y_0)$.
+
+\begin{remark}
+For this project, the point-actuator model is useful for the 
+mathematics, while a sharply localized smooth profile is better for 
+computation.
+\end{remark}
+
+\section{Eigenfunction expansion on the square}
+The Dirichlet Laplacian eigenfunctions on the unit square are
+\begin{equation}
+\label{eq:eigs}
+\phi_{mn}(x,y)=2\sin(m\pi x)\sin(n\pi y),\qquad m,n\ge 1,
+\end{equation}
+with eigenvalues
+\begin{equation}
+\label{eq:eigvals}
+\lambda_{mn}=\pi^2(m^2+n^2).
+\end{equation}
+These eigenfunctions form an orthonormal basis of $L^2(\Omega)$.
+
+We expand
+\begin{equation}
+\label{eq:expansion}
+ u(x,y,t)=\sum_{m=1}^{\infty}\sum_{n=1}^{\infty} q_{mn}(t)\,\phi_{mn}(x,y).
+\end{equation}
+Substituting \eqref{eq:expansion} into \eqref{eq:wave} and projecting 
+onto mode $(m,n)$ gives
+\begin{equation}
+\label{eq:modalode}
+ \ddot q_{mn}(t) + c^2\lambda_{mn} q_{mn}(t) = \beta_{mn}\, b(t),
+\end{equation}
+where
+\begin{equation}
+\label{eq:beta-general}
+\beta_{mn}=\int_0^1\!\int_0^1 \psi(x,y)\phi_{mn}(x,y)\,\dd x\,\dd y.
+\end{equation}
+If we use the ideal point actuator at $(x_0,y_0)$, then
+\begin{equation}
+\label{eq:beta-point}
+\beta_{mn}=\phi_{mn}(x_0,y_0)=2\sin(m\pi x_0)\sin(n\pi y_0).
+\end{equation}
+
+Thus every retained mode behaves like a harmonic oscillator driven by 
+the same scalar input $b(t)$, but with mode-dependent gain $\beta_{mn}$.
+
+\section{Finite-dimensional truncation}
+Choose an integer $M\ge 1$ and retain modes with
+\[
+1\le m,n\le M.
+\]
+There are then $N=M^2$ retained modes. Flatten the double index 
+$(m,n)$ into a single index $k=1,\dots,N$, and write
+\[
+q(t)=\begin{bmatrix} q_1(t) \\ \vdots \\ q_N(t) \end{bmatrix},
+\qquad
+p(t)=\dot q(t).
+\]
+Define
+\[
+\omega_k^2=c^2\lambda_k,
+\qquad
+\beta=\begin{bmatrix}\beta_1 \\ \vdots \\ \beta_N\end{bmatrix},
+\qquad
+\Omega_N = \operatorname{diag}(\omega_1^2,\dots,\omega_N^2).
+\]
+Then the truncated system becomes
+\begin{equation}
+\label{eq:firstorder}
+\dot x = A x + B b,
+\qquad
+x=\begin{bmatrix} q \\ p \end{bmatrix}\in\R^{2N},
+\end{equation}
+with
+\begin{equation}
+\label{eq:AB}
+A=
+\begin{bmatrix}
+0 & I \\
+-\Omega_N & 0
+\end{bmatrix},
+\qquad
+B=
+\begin{bmatrix}
+0 \\
+\beta
+\end{bmatrix}.
+\end{equation}
+
+\section{Energy and LQR cost}
+The truncated mechanical energy is
+\begin{equation}
+\label{eq:energy}
+E(t)=\frac12\sum_{k=1}^N \left(p_k(t)^2 + \omega_k^2 q_k(t)^2\right).
+\end{equation}
+A natural infinite-horizon quadratic cost is
+\begin{equation}
+\label{eq:cost}
+J(b)=\int_0^{\infty} \left( x(t)^T Q x(t) + R\,b(t)^2 \right)\dd t,
+\end{equation}
+where $Q\succeq 0$ and $R>0$.
+
+A physically meaningful choice is
+\begin{equation}
+\label{eq:Qchoice}
+Q=
+\begin{bmatrix}
+\alpha\,\Omega_N & 0 \\
+0 & \beta_v I
+\end{bmatrix},
+\qquad \alpha>0,\ \beta_v>0,
+\end{equation}
+so that displacement is penalized according to modal potential energy 
+and velocity is penalized according to kinetic energy.
+
+\section{LQR feedback law}
+For the finite-dimensional system \eqref{eq:firstorder}, the 
+infinite-horizon LQR feedback has the form
+\begin{equation}
+\label{eq:lqr-law}
+ b(t)=-Kx(t),
+\end{equation}
+where
+\begin{equation}
+\label{eq:gain}
+K=R^{-1}B^T P,
+\end{equation}
+and $P$ is the symmetric positive semidefinite solution of the 
+algebraic Riccati equation
+\begin{equation}
+\label{eq:ARE}
+A^T P + P A - P B R^{-1} B^T P + Q = 0.
+\end{equation}
+The closed-loop dynamics are
+\begin{equation}
+\label{eq:closedloop}
+\dot x = (A-BK)x.
+\end{equation}
+If the truncated pair $(A,B)$ is stabilizable and $(Q^{1/2},A)$ is 
+detectable, then the closed-loop matrix $A-BK$ is stable and the 
+modal amplitudes decay to zero.
+
+\section{Why actuator location matters}
+The actuator enters mode $(m,n)$ through the factor
+\[
+\beta_{mn}=2\sin(m\pi x_0)\sin(n\pi y_0)
+\]
+for the point-actuator model.
+
+If $\beta_{mn}=0$, then that mode is not directly actuated. This is 
+especially important for symmetric actuator locations. At the center of 
+the square,
+\[
+(x_0,y_0)=\left(\frac12,\frac12\right),
+\]
+we get
+\[
+\beta_{mn}=2\sin\left(\frac{m\pi}{2}\right)\sin\left(\frac{n\pi}{2}\right),
+\]
+which vanishes whenever $m$ or $n$ is even. Thus a centered actuator 
+misses many modes.
+
+For this reason, a good default choice is an off-center actuator such 
+as
+\[
+(x_0,y_0)=(0.37,0.61).
+\]
+That breaks symmetry and typically produces nonzero coupling to the 
+first many modes.
+
+\section{A concrete model for the students}
+A convenient starter model is:
+\begin{itemize}[leftmargin=1.5em]
+\item membrane domain $\Omega=(0,1)^2$,
+\item wave speed $c=1$,
+\item actuator location $(x_0,y_0)=(0.37,0.61)$,
+\item truncation size $M=6$ or $M=8$,
+\item point-actuator couplings from \eqref{eq:beta-point},
+\item LQR weights from \eqref{eq:Qchoice} with, say, $\alpha=1$, 
+$\beta_v=1$, $R=10^{-2}$ or $10^{-1}$.
+\end{itemize}
+
+\section{Repository guide}
+The starter repository includes a Python path and a MATLAB path. 
+In the Python code, the main driver scripts are:
+\begin{itemize}[leftmargin=1.5em]
+\item \texttt{src/python/run\_demo.py} for a first closed-loop 
+simulation,
+\item \texttt{src/python/scan\_actuator.py} for comparing actuator 
+locations,
+\item \texttt{src/python/modal\_lqr.py} for model construction, 
+LQR design, and membrane reconstruction.
+\end{itemize}
+The repository also includes a task list with milestones. Students 
+are encouraged to keep their code modular so that changing the 
+truncation size, actuator location, or cost weights requires only a 
+few edits.
+
+\section{Project tasks}
+Possible project goals include:
+\begin{enumerate}[leftmargin=1.5em]
+\item Derive the modal equations from the PDE.
+\item Build the truncated matrices $A$ and $B$.
+\item Compute the LQR gain $K$.
+\item Simulate open-loop and closed-loop trajectories for selected 
+initial conditions.
+\item Reconstruct the membrane shape from the modal coefficients.
+\item Investigate the role of actuator location.
+\item Compare a point actuator with a smooth localized actuator 
+patch.
+\end{enumerate}
+
+\section{Possible research questions}
+A mathematically meaningful research question is:
+\begin{quote}
+How does the location of a single localized actuator affect 
+controllability and LQR stabilization of a vibrating square membrane?
+\end{quote}
+More specific directions:
+\begin{itemize}[leftmargin=1.5em]
+\item What modes are lost when the actuator is placed at the center?
+\item How does the choice of $R$ affect the tradeoff between fast 
+stabilization and control effort?
+\item How large should the truncation be before the observed behavior 
+becomes qualitatively stable?
+\item Does a regularized actuator patch improve numerical robustness 
+compared with the ideal point-actuator model?
+\end{itemize}
+
+\section{Suggested deliverables}
+A final submission should include at least the following core items:
+\begin{itemize}[leftmargin=1.5em]
+\item a derivation of the finite-dimensional model,
+\item code that constructs the LQR controller,
+\item plots of modal amplitudes and control input,
+\item snapshots or an animation of the membrane displacement,
+\item a short discussion of actuator placement and uncontrollable modes.
+\end{itemize}
+
+\section*{Optional extension}
+If desired, one may add viscous damping to the PDE:
+\[u_{tt}=c^2\Delta u - \gamma u_t + b(t)\psi(x,y),\qquad \gamma>0.\]
+
+Then the modal equations become
+\[
+\ddot q_k + \gamma \dot q_k + \omega_k^2 q_k = \beta_k b(t).
+\]
+This is not necessary for the project, but it can make the numerical 
+simulations more forgiving.
+
+\end{document}
