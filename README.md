@@ -167,3 +167,9 @@ The project can be assigned at different levels:
     ├── test_coupling.py
     └── test_reconstruction.py
 </pre>
+
+## Animation
+
+![Vibrating membrane][./outputs/membrane.gif]
+
+
