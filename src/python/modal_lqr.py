@@ -69,6 +69,7 @@ def build_model(
     y0: float = 0.61,
     actuator: str = "point",
     sigma: float = 0.06,
+    gamma: float = 0.0
 ) -> MembraneModel:
     modes = build_modes(M)
     N = len(modes)
@@ -85,7 +86,7 @@ def build_model(
     A = np.block(
         [
             [np.zeros((N, N)), np.eye(N)],
-            [-np.diag(omegas_sq), np.zeros((N, N))],
+            [-np.diag(omegas_sq), -gamma * np.eye(N)],
         ]
     )
     B = np.vstack([np.zeros((N, 1)), beta.reshape(N, 1)])
