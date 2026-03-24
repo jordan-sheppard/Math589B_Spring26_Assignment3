@@ -63,7 +63,7 @@ def solve_continuous_are(A: np.ndarray, B: np.ndarray, Q: np.ndarray, R: np.ndar
 
     # Solve for P
     P = V_s2 @ np.linalg.inv(V_s1)
-    return (P + P.T) / 2            # Enforce symmetry numerically
+    return np.real((P + P.T) / 2)            # Enforce symmetry numerically
 
 
 def solve_ivp(
