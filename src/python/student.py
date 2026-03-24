@@ -92,7 +92,7 @@ def solve_ivp(
     Returns:
         ODESolution: The state and timesteps of the numerical solution.
     """
-    STEP_SAFETY_FACTOR = 0.9            # Factor to limit rejection for steps being too large
+    STEP_SAFETY_FACTOR = 0.6           # Factor to limit rejection for steps being too large
 
     t = t_span[0]
     y = y0.copy()
@@ -111,21 +111,22 @@ def solve_ivp(
         y5 = y + (16/135 * k1 ) + (6656/12825 * k3) + (28561/56430 * k4) - (9/50 * k5) + (2/55 * k6)
         
         # Compute error 
-        abserr = np.linalg.norm(y5 - y4)
-        threshold = atol + rtol * np.linalg.norm(y5)    # Absolute error tolerance, plus relative error (with no division by norm)
-        if abserr < threshold:
+        scale = atol + rtol * np.maximum(np.abs(y), np.abs(y5))
+        error_ratio = (y5 - y4) / scale
+        err = np.sqrt(np.mean(error_ratio**2))
+        if err <= 1.0:
             # ACCEPT STEP SIZE
             # Update for next iteration
             t += h
             y = y5.copy()
-            h = h * min(2, (threshold/abserr)**(0.2)) * STEP_SAFETY_FACTOR
+            h = h * min(2, (1/err)**(0.2)) * STEP_SAFETY_FACTOR
 
             # Record state and time of this iteration
             t_vals.append(t)
             y_vals.append(y)
         else:
             # REJECT STEP SIZE
-            h = h * max(0.5, (threshold/abserr)**(0.2)) * STEP_SAFETY_FACTOR
+            h = h * max(0.5, (1/err)**(0.2)) * STEP_SAFETY_FACTOR
 
         # Truncate to t_end if we've gone too far 
         if t + h > t_span[1]:
