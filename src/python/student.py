@@ -32,7 +32,7 @@ class ODESolution:
 
 
 
-def solve_continous_are(A: np.ndarray, B: np.ndarray, Q: np.ndarray, R: np.ndarray) -> np.ndarray:
+def solve_continuous_are(A: np.ndarray, B: np.ndarray, Q: np.ndarray, R: np.ndarray) -> np.ndarray:
     """
     Solve the continuous Algebraic Ricatti Equation using the Direct method.
 
@@ -52,7 +52,7 @@ def solve_continous_are(A: np.ndarray, B: np.ndarray, Q: np.ndarray, R: np.ndarr
     )
 
     # Find stable eigenvectors of H
-    eigenvals, eigenvecs = np.linalg.eig(A)
+    eigenvals, eigenvecs = np.linalg.eig(H)
     stable_indices = np.real(eigenvals) < 0
     stable_eigenvecs = eigenvecs[:,stable_indices]
 
