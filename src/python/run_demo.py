@@ -108,11 +108,11 @@ def main() -> None:
     print(f"Final closed energy:  {e_closed[-1]:.6e}")
     print(f"Max |control|:        {np.max(np.abs(u_closed)):.6e}")
 
-    # save_energy_plot(outdir, t_open, e_open, t_closed, e_closed)
-    # save_control_plot(outdir, t_closed, u_closed)
-    # save_snapshots(outdir, model, t_closed, y_closed)
-    # save_animation(outdir, model, t_closed, y_closed)
-    # print(f"Wrote demo artifacts to {outdir}")
+    save_energy_plot(outdir, t_open, e_open, t_closed, e_closed)
+    save_control_plot(outdir, t_closed, u_closed)
+    save_snapshots(outdir, model, t_closed, y_closed)
+    save_animation(outdir, model, t_closed, y_closed)
+    print(f"Wrote demo artifacts to {outdir}")
 
 
 if __name__ == "__main__":
