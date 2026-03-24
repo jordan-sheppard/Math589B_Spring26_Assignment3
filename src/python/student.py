@@ -92,6 +92,8 @@ def solve_ivp(
     Returns:
         ODESolution: The state and timesteps of the numerical solution.
     """
+    STEP_SAFETY_FACTOR = 0.9            # Factor to limit rejection for steps being too large
+
     t = t_span[0]
     y = y0.copy()
     t_vals = [t]
@@ -110,30 +112,57 @@ def solve_ivp(
         
         # Compute error 
         abserr = np.linalg.norm(y5 - y4)
-        relerr = abserr / np.linalg.norm(y5)            # TODO: IS THIS OKAY? 
-        if abserr < atol or relerr < rtol:              # TODO: Should this be and or or?
+        threshold = atol + rtol * np.linalg.norm(y5)    # Absolute error tolerance, plus relative error (with no division by norm)
+        if abserr < threshold:
+            # ACCEPT STEP SIZE
             # Update for next iteration
             t += h
             y = y5.copy()
-            h = h * min(2, (rtol/relerr)**(0.2))        # TODO: Should this use relative or absolute error?
+            h = h * min(2, (threshold/abserr)**(0.2)) * STEP_SAFETY_FACTOR
 
             # Record state and time of this iteration
             t_vals.append(t)
             y_vals.append(y)
         else:
-            h = h * max(0.5, (rtol/relerr)**(0.2))      # TODO: Should this use relative or absolute error?
+            # REJECT STEP SIZE
+            h = h * max(0.5, (threshold/abserr)**(0.2)) * STEP_SAFETY_FACTOR
 
         # Truncate to t_end if we've gone too far 
         if t + h > t_span[1]:
             h = t_span[1] - t
     
-    # TODO: Currently, we're only using the values at the adaptive timesteps.
-    # We need to use the values at the given t_eval, using a quadratic interpolant.
-
+    # If no provided times for interpolation, use RK45 timesteps
+    if t_eval is None:
+        t_eval = np.array(t_vals)
+        y_eval = np.array(y_vals).T 
+        return ODESolution(
+            t=t_eval,
+            y=y_eval
+        )
     
+    # Interpolate states at given evaluation times in t_eval
+    y_eval = np.zeros((len(y0), len(t_eval)))
+    time_idx = 0
+    for i in range(1, len(t_vals)):
+        # Cubic spline interpolant between these two points
+        t1, t2 = t_vals[i-1], t_vals[i]
+        y1, y2 = y_vals[i-1], y_vals[i]
+        dy1, dy2 = f(t1, y1), f(t2, y2)
+        while time_idx < (len(t_eval) - 1) and t_eval[time_idx] >= t1 and t_eval[time_idx] < t2:
+            t = t_eval[time_idx]
+            s = (t-t1)/(t2-t1)
+            w1 = 2*(s**3) - 3*(s**2) + 1
+            w2 = -2*(s**3) + 3*(s**2)
+            w3 = (s**3) - 2*(s**2) + s
+            w4 = (s**3) - (s**2)
+            y_eval[:, time_idx] = (w1 * y1) + (w2 * y2) + (w3 * (t2 - t1) * dy1) + (w4 * (t2 - t1) * dy2)
+            time_idx += 1
+
+    y_eval[:, -1] = y_vals[-1] # Catch final state
+
     return ODESolution(
-        t=np.array(t_vals),
-        y=np.array(y_vals).T
+        t=t_eval,
+        y=y_eval
     )
 
 
